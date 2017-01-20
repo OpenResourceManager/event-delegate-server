@@ -1,0 +1,11 @@
+server:
+  listen_address: 127.0.0.1
+  listen_port: 3000
+  debug: false
+redis:
+  host: 127.0.0.1
+  port: 6379
+  db: 0
+  use_socket: false
+  socket_path: null
+  password: null

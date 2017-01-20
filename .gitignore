@@ -135,4 +135,4 @@ $RECYCLE.BIN/
 # Windows shortcuts
 *.lnk
 
-/config/conf.json
+/config/conf.yaml

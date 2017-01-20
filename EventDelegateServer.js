@@ -1,11 +1,61 @@
+var yaml = require('js-yaml');
+var fs = require('fs');
+var confFilePath = 'config/conf.yaml';
 var server = require('http').Server();
 var io = require('socket.io')(server);
 var request = require('request');
-var IoRedis = require('ioredis');
-var ioRedis = new IoRedis();
-var redis = new IoRedis();
+var Redis = require('ioredis');
 
-ioRedis.subscribe('events');
+// Load the configuration
+if (fs.existsSync(confFilePath)) {
+    var config = yaml.safeLoad(fs.readFileSync(confFilePath, 'utf8'));
+    console.info('Loaded configuration file from : ' + confFilePath);
+} else {
+    var config = {
+        "server": {
+            "listen_address": "127.0.0.1",
+            "listen_port": 3000,
+            "debug": true
+        },
+        "redis": {
+            "host": "127.0.0.1",
+            "port": 6379,
+            "db": 0,
+            "use_socket": false,
+            "socket_path": null,
+            "password": null
+        }
+    };
+    console.warn('Unable to find configuration file(' + confFilePath + ')... using default settings.');
+}
+
+var debug = config.server.debug;
+if (debug) console.log("Debugging enabled!\nCurrent Configuration:\n" + JSON.stringify(config));
+
+
+if (config.redis.use_socket) {
+    var redis = new Redis(config.redis.socket_path);
+    var local_redis = new Redis(config.redis.socket_path);
+    console.info('Connected to Redis server on socket: ' + config.redis.socket_path);
+} else {
+    var redis = new Redis({
+        port: config.redis.pass,
+        host: config.redis.host,
+        family: 4,
+        password: config.redis.password,
+        db: config.redis.db
+    });
+    var local_redis = new Redis({
+        port: config.redis.pass,
+        host: config.redis.host,
+        family: 4,
+        password: config.redis.password,
+        db: config.redis.db
+    });
+    console.info('Connected to Redis server: ' + config.redis.host + ':' + config.redis.port);
+}
+
+redis.subscribe('events');
 
 function handleCreate(type, data) {
     switch (type) {
@@ -274,7 +324,7 @@ function handleEvent(message) {
 /**
  * Messages from Redis server
  */
-ioRedis.on('message', function (channel, message) {
+redis.on('message', function (channel, message) {
         switch (channel) {
             case 'events':
                 handleEvent(message);
@@ -293,10 +343,10 @@ io.on('connection', function (socket) {
     socket.on('join', function (message) {
         var hostname = message.hostname;
         var socket_id = socket.id;
-        redis.set(hostname, JSON.stringify({
+        local_redis.set(hostname, JSON.stringify({
             'socket': socket_id
         }));
-        redis.set(socket_id, JSON.stringify({
+        local_redis.set(socket_id, JSON.stringify({
             'hostname': hostname
         }));
         console.log(hostname + ' has connected with socket: ' + socket_id);
@@ -305,15 +355,16 @@ io.on('connection', function (socket) {
     socket.on('disconnect', function () {
         var socket_id = socket.id;
         // Get the host by the socket ID
-        redis.get(socket_id, function (err, result) {
+        local_redis.get(socket_id, function (err, result) {
             var host = JSON.parse(result);
             var hostname = host.hostname;
             // Delete the entry with that socket ID as the key
-            redis.del(socket_id);
-            redis.del(hostname);
+            local_redis.del(socket_id);
+            local_redis.del(hostname);
             console.log(hostname + ' has disconnected');
         });
     });
 });
 
-server.listen(3000);
+server.listen(config.server.listen_port, config.server.listen_address);
+console.info('Listening for connections on: ' + config.server.listen_address + ':' + config.server.listen_port);
