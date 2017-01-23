@@ -100,6 +100,49 @@ function handleCreate(type, data) {
     }
 }
 
+function handleView(type, data) {
+    switch (type) {
+        case 'account':
+            console.log('Emitting view : "' + type + '" event...');
+            io.emit('view_account', data);
+            break;
+        case 'email':
+            console.log('Emitting view : "' + type + '" event...');
+            io.emit('view_email', data);
+            break;
+        case 'phone':
+            console.log('Emitting view : "' + type + '" event...');
+            io.emit('view_phone', data);
+            break;
+        case 'duty':
+            console.log('Emitting view : "' + type + '" event...');
+            io.emit('view_duty', data);
+            break;
+        case 'campus':
+            console.log('Emitting view : "' + type + '" event...');
+            io.emit('view_campus', data);
+            break;
+        case 'building':
+            console.log('Emitting view : "' + type + '" event...');
+            io.emit('view_building', data);
+            break;
+        case 'room':
+            console.log('Emitting view : "' + type + '" event...');
+            io.emit('view_room', data);
+            break;
+        case 'department':
+            console.log('Emitting view : "' + type + '" event...');
+            io.emit('view_department', data);
+            break;
+        case 'course':
+            console.log('Emitting view : "' + type + '" event...');
+            io.emit('view_course', data);
+            break;
+        default:
+            console.log('Received an unknown view type: "' + type + '"');
+    }
+}
+
 function handleDelete(type, data) {
     switch (type) {
         case 'account':
@@ -303,6 +346,9 @@ function handleEvent(message) {
         case 'created':
             handleCreate(type, data);
             break;
+        case 'viewed':
+            handleView(type, data);
+            break;
         case 'deleted':
             handleDelete(type, data);
             break;
@@ -349,7 +395,7 @@ io.on('connection', function (socket) {
         local_redis.set(socket_id, JSON.stringify({
             'hostname': hostname
         }));
-        console.log(hostname + ' has connected with socket: ' + socket_id);
+        console.log('Delegate: ' + hostname + ' has connected with socket: ' + socket_id);
     });
 
     socket.on('disconnect', function () {
