@@ -6,56 +6,13 @@ var io = require('socket.io')(server);
 var request = require('request');
 var Redis = require('ioredis');
 
-// Load the configuration
-if (fs.existsSync(confFilePath)) {
-    var config = yaml.safeLoad(fs.readFileSync(confFilePath, 'utf8'));
-    console.info('Loaded configuration file from : ' + confFilePath);
-} else {
-    var config = {
-        "server": {
-            "listen_address": "127.0.0.1",
-            "listen_port": 3000,
-            "debug": true
-        },
-        "redis": {
-            "host": "127.0.0.1",
-            "port": 6379,
-            "db": 0,
-            "use_socket": false,
-            "socket_path": null,
-            "password": null
-        }
-    };
-    console.warn('Unable to find configuration file(' + confFilePath + ')... using default settings.');
-}
-
-var debug = config.server.debug;
-if (debug) console.log("Debugging enabled!\nCurrent Configuration:\n" + JSON.stringify(config));
-
-
-if (config.redis.use_socket) {
-    var redis = new Redis(config.redis.socket_path);
-    var local_redis = new Redis(config.redis.socket_path);
-    console.info('Connected to Redis server on socket: ' + config.redis.socket_path);
-} else {
-    var redis = new Redis({
-        port: config.redis.pass,
-        host: config.redis.host,
-        family: 4,
-        password: config.redis.password,
-        db: config.redis.db
-    });
-    var local_redis = new Redis({
-        port: config.redis.pass,
-        host: config.redis.host,
-        family: 4,
-        password: config.redis.password,
-        db: config.redis.db
-    });
-    console.info('Connected to Redis server: ' + config.redis.host + ':' + config.redis.port);
-}
-
-redis.subscribe('events');
+/**
+ *
+ *
+ * Functions
+ *
+ *
+ */
 
 function handleCreate(type, data) {
     switch (type) {
@@ -366,6 +323,100 @@ function handleEvent(message) {
     }
 }
 
+/**
+ *
+ *
+ * End Functions
+ *
+ *
+ */
+
+/**
+ *
+ *
+ * Initialize And Read Configuration
+ *
+ *
+ */
+
+// Load the configuration from config file, or load default hard coded config
+if (fs.existsSync(confFilePath)) {
+    // Load the configuration from the config file
+    var config = yaml.safeLoad(fs.readFileSync(confFilePath, 'utf8'));
+    // Info
+    console.info('Loaded configuration file from : ' + confFilePath);
+} else {
+    // Load the default config
+    var config = {
+        "server": {
+            "listen_address": "127.0.0.1",
+            "listen_port": 3000,
+            "debug": true
+        },
+        "redis": {
+            "host": "127.0.0.1",
+            "port": 6379,
+            "db": 0,
+            "use_socket": false,
+            "socket_path": null,
+            "password": null
+        }
+    };
+    // Warning about using the default config
+    console.warn('Unable to find configuration file(' + confFilePath + ')... using default settings.');
+}
+
+// Read the debug variable
+var debug = config.server.debug;
+// Notify that debugging is enabled
+if (debug) console.log("Debugging enabled!\nCurrent Configuration:\n" + JSON.stringify(config));
+// Are we connecting to a redis socket or using TCP?
+if (config.redis.use_socket) {
+    // Create a redis object that we will use to read incoming events
+    var redis = new Redis(config.redis.socket_path);
+    // Create a redis object that allows us to store local objects
+    var local_redis = new Redis(config.redis.socket_path);
+    // We are connected to redis socket
+    console.info('Connected to Redis server on socket: ' + config.redis.socket_path);
+} else {
+    // Create a redis object that we will use to read incoming events
+    var redis = new Redis({
+        port: config.redis.pass,
+        host: config.redis.host,
+        family: 4,
+        password: config.redis.password,
+        db: config.redis.db
+    });
+    // Create a redis object that allows us to store local objects
+    var local_redis = new Redis({
+        port: config.redis.pass,
+        host: config.redis.host,
+        family: 4,
+        password: config.redis.password,
+        db: config.redis.db
+    });
+    // We are connected to redis server
+    console.info('Connected to Redis server: ' + config.redis.host + ':' + config.redis.port);
+}
+// Subscribe to the events channel
+redis.subscribe('events');
+
+/**
+ *
+ *
+ * End Configuration Section
+ *
+ *
+ */
+
+
+/**
+ *
+ *
+ * Server Initialization
+ *
+ *
+ */
 
 /**
  * Messages from Redis server
@@ -376,7 +427,10 @@ redis.on('message', function (channel, message) {
                 handleEvent(message);
                 break;
             default:
-                console.log('Received request on unknown channel: "' + channel + '"');
+                // Warn that we received a message on an unknown channel
+                console.warn('Received request on unknown channel: "' + channel + '"... Is something else broadcasting on this Redis server?');
+                // Debug log the message
+                if (debug) console.warn(message)
         }
     }
 );
@@ -395,7 +449,11 @@ io.on('connection', function (socket) {
         local_redis.set(socket_id, JSON.stringify({
             'hostname': hostname
         }));
-        console.log('Delegate: ' + hostname + ' has connected with socket: ' + socket_id);
+        if (debug) {
+            console.log('Delegate: ' + hostname + ' has connected with socket: ' + socket_id);
+        } else {
+            console.log('Delegate: ' + hostname + ' has connected');
+        }
     });
 
     socket.on('disconnect', function () {
@@ -408,6 +466,7 @@ io.on('connection', function (socket) {
             local_redis.del(socket_id);
             local_redis.del(hostname);
             console.log(hostname + ' has disconnected');
+            if (debug) console.log('Socket (' + socket_id + ') closed');
         });
     });
 });
