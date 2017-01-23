@@ -11,10 +11,12 @@ node_js:
   - "5.11"
 services:
   - redis-server
+before_install:
+  - cp config/conf.example.yaml config/conf.yaml
 install:
   - npm install -g yarn
   - yarn install
 script:
-  - standard
-  - node EventDelegateServer.js
-
+  - npm standard
+  - npm start
+  - npm test
