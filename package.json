@@ -13,7 +13,6 @@
     "standard": "^8.6.0"
   },
   "scripts": {
-    "start": "NODE_ENV=development; timeout 30s node EventDelegateServer.js",
     "test": "NODE_ENV=test; ./node_modules/.bin/standard; ./node_modules/.bin/mocha mocha;"
   }
 }
