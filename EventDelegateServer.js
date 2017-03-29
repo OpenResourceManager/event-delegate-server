@@ -23,6 +23,10 @@ function handleCreate (type, data) {
       console.log('Emitting create : "' + type + '" event...')
       io.emit('create_account', data)
       break
+    case 'alias-account':
+      console.log('Emitting create : "' + type + '" event...')
+      io.emit('create_alias_account', data)
+      break
     case 'email':
       console.log('Emitting create : "' + type + '" event...')
       io.emit('create_email', data)
@@ -65,6 +69,10 @@ function handleUpdate (type, data) {
     case 'account':
       console.log('Emitting update : "' + type + '" event...')
       io.emit('update_account', data)
+      break
+    case 'alias-account':
+      console.log('Emitting update : "' + type + '" event...')
+      io.emit('update_alias_account', data)
       break
     case 'email':
       console.log('Emitting update : "' + type + '" event...')
@@ -109,6 +117,10 @@ function handleView (type, data) {
       console.log('Emitting view : "' + type + '" event...')
       io.emit('view_account', data)
       break
+    case 'alias-account':
+      console.log('Emitting view : "' + type + '" event...')
+      io.emit('view_alias_account', data)
+      break
     case 'email':
       console.log('Emitting view : "' + type + '" event...')
       io.emit('view_email', data)
@@ -152,6 +164,10 @@ function handleDelete (type, data) {
       console.log('Emitting delete : "' + type + '" event...')
       io.emit('delete_account', data)
       break
+    case 'alias-account':
+      console.log('Emitting delete : "' + type + '" event...')
+      io.emit('delete_alias_account', data)
+      break
     case 'email':
       console.log('Emitting delete : "' + type + '" event...')
       io.emit('delete_email', data)
@@ -194,6 +210,10 @@ function handleRestore (type, data) {
     case 'account':
       console.log('Emitting restore : "' + type + '" event...')
       io.emit('restore_account', data)
+      break
+    case 'alias-account':
+      console.log('Emitting restore : "' + type + '" event...')
+      io.emit('restore_alias_account', data)
       break
     case 'duty':
       console.log('Emitting restore : "' + type + '" event...')
