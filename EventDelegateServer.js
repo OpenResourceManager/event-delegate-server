@@ -60,6 +60,49 @@ function handleCreate (type, data) {
   }
 }
 
+function handleUpdate (type, data) {
+  switch (type) {
+    case 'account':
+      console.log('Emitting update : "' + type + '" event...')
+      io.emit('update_account', data)
+      break
+    case 'email':
+      console.log('Emitting update : "' + type + '" event...')
+      io.emit('update_email', data)
+      break
+    case 'phone':
+      console.log('Emitting update : "' + type + '" event...')
+      io.emit('update_phone', data)
+      break
+    case 'duty':
+      console.log('Emitting update : "' + type + '" event...')
+      io.emit('update_duty', data)
+      break
+    case 'campus':
+      console.log('Emitting update : "' + type + '" event...')
+      io.emit('update_campus', data)
+      break
+    case 'building':
+      console.log('Emitting update : "' + type + '" event...')
+      io.emit('update_building', data)
+      break
+    case 'room':
+      console.log('Emitting update : "' + type + '" event...')
+      io.emit('update_room', data)
+      break
+    case 'department':
+      console.log('Emitting update : "' + type + '" event...')
+      io.emit('update_department', data)
+      break
+    case 'course':
+      console.log('Emitting update : "' + type + '" event...')
+      io.emit('update_course', data)
+      break
+    default:
+      console.log('Received an unknown update type: "' + type + '"')
+  }
+}
+
 function handleView (type, data) {
   switch (type) {
     case 'account':
@@ -305,6 +348,9 @@ function handleEvent (message) {
   switch (event) {
     case 'created':
       handleCreate(type, data)
+      break
+    case 'updated':
+      handleUpdate(type, data)
       break
     case 'viewed':
       handleView(type, data)
