@@ -60,6 +60,10 @@ function handleCreate(type, data) {
             console.log('Emitting create : "' + type + '" event...')
             io.emit('create_course', data)
             break;
+        case 'load-status':
+            console.log('Emitting create : "' + type + '" event...')
+            io.emit('create_load_status', data)
+            break
         case 'school':
             console.log('Emitting create : "' + type + '" event...')
             io.emit('create_school', data)
@@ -110,6 +114,10 @@ function handleUpdate(type, data) {
         case 'course':
             console.log('Emitting update : "' + type + '" event...')
             io.emit('update_course', data)
+            break
+        case 'load-status':
+            console.log('Emitting update : "' + type + '" event...')
+            io.emit('update_load_status', data)
             break
         case 'school':
             console.log('Emitting update : "' + type + '" event...')
@@ -162,6 +170,10 @@ function handleView(type, data) {
             console.log('Emitting view : "' + type + '" event...')
             io.emit('view_course', data)
             break
+        case 'load-status':
+            console.log('Emitting view : "' + type + '" event...')
+            io.emit('view_load_status', data)
+            break
         case 'school':
             console.log('Emitting view : "' + type + '" event...')
             io.emit('view_school', data)
@@ -213,6 +225,10 @@ function handleDelete(type, data) {
             console.log('Emitting delete : "' + type + '" event...')
             io.emit('delete_course', data)
             break
+        case 'load-status':
+            console.log('Emitting delete : "' + type + '" event...')
+            io.emit('delete_load_status', data)
+            break
         case 'school':
             console.log('Emitting delete : "' + type + '" event...')
             io.emit('delete_school', data)
@@ -255,6 +271,10 @@ function handleRestore(type, data) {
         case 'course':
             console.log('Emitting restore : "' + type + '" event...')
             io.emit('restore_course', data)
+            break
+        case 'load-status':
+            console.log('Emitting restore : "' + type + '" event...')
+            io.emit('restore_load_status', data)
             break
         case 'school':
             console.log('Emitting restore : "' + type + '" event...')
