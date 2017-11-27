@@ -3,7 +3,7 @@ Description=ORM Event Delegate Server
 After=network.target
 
 [Service]
-Type=simple
+Type=forking
 ExecStart=/bin/bash -c 'exec /usr/bin/node /opt/OpenResourceManager/EventDelegateServer/EventDelegateServer.js >> /var/log/orm/EventDelegateServer/run.log 2>> /var/log/orm/EventDelegateServer/error.log'
 ExecStop=/bin/bash -c 'ID=$(head -n 1 /var/run/event-delegate-server.pid); kill -9 ${ID};'
 PIDFile=/var/run/event-delegate-server.pid
