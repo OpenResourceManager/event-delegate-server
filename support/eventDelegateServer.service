@@ -1,0 +1,19 @@
+[Unit]
+Description=ORM Event Delegate Server
+After=network.target
+
+[Service]
+Type=forking
+ExecStart=/usr/bin/node /opt/OpenResourceManager/EventDelegateServer/EventDelegateServer.js
+WorkingDirectory=/opt/OpenResourceManager/EventDelegateServer
+PIDFile=/var/run/event-delegate-server.pid
+Restart=always
+RestartSec=2
+Environment=PATH=/usr/bin:/usr/local/bin
+Environment=NODE_ENV=production
+StandardOutput=/var/log/orm/EventDelegateServer/run.log
+StandardError=/var/log/orm/EventDelegateServer/error.log
+
+[Install]
+WantedBy=multi-user.target
+Alias=eventDelegateServer.service

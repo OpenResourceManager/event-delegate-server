@@ -7,6 +7,7 @@ var Redis = require('ioredis')
 var config = null
 var redis = null
 var localRedis = null
+var pid = require('daemon-pid')('/var/run/event-delegate-server.pid');
 
 // var request = require('request')
 
@@ -541,6 +542,22 @@ redis.subscribe('events')
  *
  *
  */
+
+/**
+ * writes-out the pid file
+ */
+pid.write(function (err) {
+    if (err) console.error('Something went wrong when creating the pid file!');
+});
+
+/**
+ * on SIGTERM delete the pid file
+ */
+process.on('SIGTERM', function () {
+    pid.delete(function (err) {
+        if (err) console.error('Something went wrong when deleting the pid file! Does it exist?');
+    });
+});
 
 /**
  * Messages from Redis server
