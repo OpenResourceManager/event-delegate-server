@@ -10,9 +10,7 @@ PIDFile=/var/run/event-delegate-server.pid
 Restart=always
 RestartSec=2
 Environment=NODE_ENV=production
-User=nobody
-Group=nobody
 
 [Install]
-WantedBy=multi-user.target
+WantedBy=sysinit.target
 Alias=eventDelegateServer.service
