@@ -628,9 +628,16 @@ pid.write(function (err) {
             ioConnections.forEach(function (i) {
                 i.destroy()
             })
+
             connections.forEach(function (s) {
                 s.destroy()
             });
+
+            redis.disconnect()
+            localRedis.disconnect()
+
+            redis.destroy()
+            localRedis.destroy()
 
             server.close(function () {
                 pid.delete(function (err) {
