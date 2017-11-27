@@ -4,15 +4,14 @@ After=network.target
 
 [Service]
 Type=forking
-ExecStart=/usr/bin/node /opt/OpenResourceManager/EventDelegateServer/EventDelegateServer.js
+ExecStart=/usr/bin/node /opt/OpenResourceManager/EventDelegateServer/EventDelegateServer.js | /usr/bin/tee /var/log/orm/EventDelegateServer/run.log
 WorkingDirectory=/opt/OpenResourceManager/EventDelegateServer
 PIDFile=/var/run/event-delegate-server.pid
 Restart=always
 RestartSec=2
-Environment=PATH=/usr/bin:/usr/local/bin
 Environment=NODE_ENV=production
-StandardOutput=/var/log/orm/EventDelegateServer/run.log
-StandardError=/var/log/orm/EventDelegateServer/error.log
+User=nobody
+Group=nobody
 
 [Install]
 WantedBy=multi-user.target
