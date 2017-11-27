@@ -1,3 +1,4 @@
+var pid = require('daemon-pid')('/var/run/event-delegate-server.pid');
 var yaml = require('js-yaml')
 var fs = require('fs')
 var confFilePath = 'config/conf.yaml'
@@ -7,7 +8,7 @@ var Redis = require('ioredis')
 var config = null
 var redis = null
 var localRedis = null
-var pid = require('daemon-pid')('/var/run/event-delegate-server.pid');
+
 
 // var request = require('request')
 
@@ -459,156 +460,184 @@ function handleEvent(message) {
  */
 
 /**
- *
- *
- * Initialize And Read Configuration
- *
- *
- */
-
-// Load the configuration from config file, or load default hard coded config
-if (fs.existsSync(confFilePath)) {
-    // Load the configuration from the config file
-    config = yaml.safeLoad(fs.readFileSync(confFilePath, 'utf8'))
-    // Info
-    console.info('Loaded configuration file from : ' + confFilePath)
-} else {
-    // Load the default config
-    config = {
-        'server': {
-            'listen_address': '127.0.0.1',
-            'listen_port': 3000,
-            'debug': true
-        },
-        'redis': {
-            'host': '127.0.0.1',
-            'port': 6379,
-            'db': 0,
-            'use_socket': false,
-            'socket_path': null,
-            'password': null
-        }
-    }
-    // Warning about using the default config
-    console.warn('Unable to find configuration file(' + confFilePath + ')... using default settings.')
-}
-// Read the debug variable
-var debug = config.server.debug
-// Notify that debugging is enabled
-if (debug) console.log('Debugging enabled!\nCurrent Configuration:\n' + JSON.stringify(config))
-// Are we connecting to a redis socket or using TCP?
-if (config.redis.use_socket) {
-    // Create a redis object that we will use to read incoming events
-    redis = new Redis(config.redis.socket_path)
-    // Create a redis object that allows us to store local objects
-    localRedis = new Redis(config.redis.socket_path)
-    // We are connected to redis socket
-    console.info('Connected to Redis server on socket: ' + config.redis.socket_path)
-} else {
-    // Create a redis object that we will use to read incoming events
-    redis = new Redis({
-        port: config.redis.pass,
-        host: config.redis.host,
-        family: 4,
-        password: config.redis.password,
-        db: config.redis.db
-    })
-    // Create a redis object that allows us to store local objects
-    localRedis = new Redis({
-        port: config.redis.pass,
-        host: config.redis.host,
-        family: 4,
-        password: config.redis.password,
-        db: config.redis.db
-    })
-    // We are connected to redis server
-    console.info('Connected to Redis server: ' + config.redis.host + ':' + config.redis.port)
-}
-// Subscribe to the events channel
-redis.subscribe('events')
-
-/**
- *
- *
- * End Configuration Section
- *
- *
- */
-
-/**
- *
- *
- * Server Initialization
- *
- *
- */
-
-/**
  * writes-out the pid file
  */
 pid.write(function (err) {
-    if (err) console.error('Something went wrong when creating the pid file!');
-});
+    if (err) {
+        console.error('Something went wrong when creating the pid file!', err)
+    } else {
+        /**
+         *
+         *
+         * Initialize And Read Configuration
+         *
+         *
+         */
 
-/**
- * on SIGTERM delete the pid file
- */
-process.on('SIGTERM', function () {
-    pid.delete(function (err) {
-        if (err) console.error('Something went wrong when deleting the pid file! Does it exist?');
-    });
-});
+        // Load the configuration from config file, or load default hard coded config
+        if (fs.existsSync(confFilePath)) {
+            // Load the configuration from the config file
+            config = yaml.safeLoad(fs.readFileSync(confFilePath, 'utf8'))
+            // Info
+            console.info('Loaded configuration file from : ' + confFilePath)
+        } else {
+            // Load the default config
+            config = {
+                'server': {
+                    'listen_address': '127.0.0.1',
+                    'listen_port': 3000,
+                    'debug': true
+                },
+                'redis': {
+                    'host': '127.0.0.1',
+                    'port': 6379,
+                    'db': 0,
+                    'use_socket': false,
+                    'socket_path': null,
+                    'password': null
+                }
+            }
+            // Warning about using the default config
+            console.warn('Unable to find configuration file(' + confFilePath + ')... using default settings.')
+        }
+        // Read the debug variable
+        var debug = config.server.debug
+        // Create a connections array
+        var connections = []
+        var ioConnections = [];
+        // Notify that debugging is enabled
+        if (debug) console.log('Debugging enabled!\nCurrent Configuration:\n' + JSON.stringify(config))
+        // Are we connecting to a redis socket or using TCP?
+        if (config.redis.use_socket) {
+            // Create a redis object that we will use to read incoming events
+            redis = new Redis(config.redis.socket_path)
+            // Create a redis object that allows us to store local objects
+            localRedis = new Redis(config.redis.socket_path)
+            // We are connected to redis socket
+            console.info('Connected to Redis server on socket: ' + config.redis.socket_path)
+        } else {
+            // Create a redis object that we will use to read incoming events
+            redis = new Redis({
+                port: config.redis.pass,
+                host: config.redis.host,
+                family: 4,
+                password: config.redis.password,
+                db: config.redis.db
+            })
+            // Create a redis object that allows us to store local objects
+            localRedis = new Redis({
+                port: config.redis.pass,
+                host: config.redis.host,
+                family: 4,
+                password: config.redis.password,
+                db: config.redis.db
+            })
+            // We are connected to redis server
+            console.info('Connected to Redis server: ' + config.redis.host + ':' + config.redis.port)
+        }
+        // Subscribe to the events channel
+        redis.subscribe('events')
 
-/**
- * Messages from Redis server
- */
-redis.on('message', function (channel, message) {
-    switch (channel) {
-        case 'events':
-            handleEvent(message)
-            break
-        default:
-            // Warn that we received a message on an unknown channel
-            console.warn('Received request on unknown channel: "' + channel + '"... Is something else broadcasting on this Redis server/channel?')
-            // Debug log the message
-            if (debug) console.warn(message)
+        /**
+         *
+         *
+         * End Configuration Section
+         *
+         *
+         */
+
+        /**
+         *
+         *
+         * Server Initialization
+         *
+         *
+         */
+
+        /**
+         * Messages from Redis server
+         */
+        redis.on('message', function (channel, message) {
+            switch (channel) {
+                case 'events':
+                    handleEvent(message)
+                    break
+                default:
+                    // Warn that we received a message on an unknown channel
+                    console.warn('Received request on unknown channel: "' + channel + '"... Is something else broadcasting on this Redis server/channel?')
+                    // Debug log the message
+                    if (debug) console.warn(message)
+            }
+        })
+
+        /**
+         * Messages from clients
+         */
+        io.on('connection', function (socket) {
+            socket.on('join', function (message) {
+                var hostname = message.hostname
+                var socketID = socket.id
+                ioConnections.push(socket)
+                localRedis.set(hostname, JSON.stringify({
+                    'socket': socketID
+                }))
+                localRedis.set(socketID, JSON.stringify({
+                    'hostname': hostname
+                }))
+                if (debug) {
+                    console.log('Delegate: ' + hostname + ' has connected with socket: ' + socketID)
+                } else {
+                    console.log('Delegate: ' + hostname + ' has connected')
+                }
+            })
+            socket.on('disconnect', function () {
+                ioConnections.splice(ioConnections.indexOf(socket), 1)
+                var socketID = socket.id
+                // Get the host by the socket ID
+                localRedis.get(socketID, function (err, result) {
+                    if (err) console.error(err.stack)
+                    var host = JSON.parse(result)
+                    var hostname = host.hostname
+                    // Delete the entry with that socket ID as the key
+                    localRedis.del(socketID)
+                    localRedis.del(hostname)
+                    console.log(hostname + ' has disconnected')
+                    if (debug) console.log('Socket (' + socketID + ') closed')
+                })
+            })
+        })
+
+        server.listen(config.server.listen_port, config.server.listen_address)
+
+        server.on('connection', function (s) {
+            connections.push(s)
+        })
+
+        server.on('close', function (s) {
+            connections.splice(connections.indexOf(s), 1)
+        })
+
+        console.info('Listening for connections on: ' + config.server.listen_address + ':' + config.server.listen_port)
+
+        /**
+         * on SIGTERM delete the pid file
+         */
+        process.on('SIGTERM', function () {
+
+            // Disconnect everyone right now.
+            ioConnections.forEach(function (i) {
+                i.destroy()
+            })
+            connections.forEach(function (s) {
+                s.destroy()
+            });
+
+            server.close(function () {
+                pid.delete(function (err) {
+                    if (err) console.error('Something we wrong deleting the pid file!', err)
+                    console.log('Server stopped.')
+                })
+            })
+        })
     }
 })
-
-/**
- * Messages from clients
- */
-io.on('connection', function (socket) {
-    socket.on('join', function (message) {
-        var hostname = message.hostname
-        var socketID = socket.id
-        localRedis.set(hostname, JSON.stringify({
-            'socket': socketID
-        }))
-        localRedis.set(socketID, JSON.stringify({
-            'hostname': hostname
-        }))
-        if (debug) {
-            console.log('Delegate: ' + hostname + ' has connected with socket: ' + socketID)
-        } else {
-            console.log('Delegate: ' + hostname + ' has connected')
-        }
-    })
-    socket.on('disconnect', function () {
-        var socketID = socket.id
-        // Get the host by the socket ID
-        localRedis.get(socketID, function (err, result) {
-            if (err) console.error(err.stack)
-            var host = JSON.parse(result)
-            var hostname = host.hostname
-            // Delete the entry with that socket ID as the key
-            localRedis.del(socketID)
-            localRedis.del(hostname)
-            console.log(hostname + ' has disconnected')
-            if (debug) console.log('Socket (' + socketID + ') closed')
-        })
-    })
-})
-
-server.listen(config.server.listen_port, config.server.listen_address)
-console.info('Listening for connections on: ' + config.server.listen_address + ':' + config.server.listen_port)

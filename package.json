@@ -1,6 +1,7 @@
 {
   "private": true,
   "dependencies": {
+    "child_process": "^1.0.2",
     "daemon-pid": "^1.0.0-b.3",
     "fs": "^0.0.1-security",
     "http": "^0.0.0",
