@@ -1,16 +1,19 @@
 [Unit]
 Description=ORM Event Delegate Server
+After=multi-user.target
 After=network.target
+After=syslog.target
 
 [Service]
 Type=simple
-ExecStart=/bin/bash -c 'exec /usr/bin/node /opt/OpenResourceManager/EventDelegateServer/EventDelegateServer.js >> /var/log/orm/EventDelegateServer/run.log 2>> /var/log/orm/EventDelegateServer/error.log'
-WorkingDirectory=/opt/OpenResourceManager/EventDelegateServer
-PIDFile=/var/run/event-delegate-server.pid
-Restart=on-failure
-RestartSec=2
 Environment=NODE_ENV=production
+ExecStart=/bin/bash -c 'exec /usr/bin/node /opt/OpenResourceManager/EventDelegateServer/EventDelegateServer.js > >(/usr/bin/tee -a /var/log/orm/EventDelegateServer/run.log) 2> >(/usr/bin/tee -a /var/log/orm/EventDelegateServer/error.log >&2)'
+PIDFile=/var/run/event-delegate-server.pid
+Restart=always
+RestartSec=2
+StandardOutput=syslog
+StandardError=syslog
+SyslogIdentifier=event-delegate-server
 
 [Install]
-WantedBy=sysinit.target
-Alias=eventDelegateServer.service
+WantedBy=multi-user.target
