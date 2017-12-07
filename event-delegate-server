@@ -1,3 +1,5 @@
+#!/usr/bin/env node
+
 var pid = require('daemon-pid')('/var/run/event-delegate-server.pid');
 var yaml = require('js-yaml')
 var fs = require('fs')
