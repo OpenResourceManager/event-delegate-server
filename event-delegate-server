@@ -577,19 +577,21 @@ pid.write(function (err) {
          */
         io.on('connection', function (socket) {
             socket.on('join', function (message) {
-                var hostname = message.hostname
-                var socketID = socket.id
-                ioConnections.push(socket)
-                localRedis.set(hostname, JSON.stringify({
-                    'socket': socketID
-                }))
-                localRedis.set(socketID, JSON.stringify({
-                    'hostname': hostname
-                }))
-                if (debug) {
-                    console.log('Delegate: ' + hostname + ' has connected with socket: ' + socketID)
-                } else {
-                    console.log('Delegate: ' + hostname + ' has connected')
+                if (message) {
+                    var hostname = message.hostname
+                    var socketID = socket.id
+                    ioConnections.push(socket)
+                    localRedis.set(hostname, JSON.stringify({
+                        'socket': socketID
+                    }))
+                    localRedis.set(socketID, JSON.stringify({
+                        'hostname': hostname
+                    }))
+                    if (debug) {
+                        console.log('Delegate: ' + hostname + ' has connected with socket: ' + socketID)
+                    } else {
+                        console.log('Delegate: ' + hostname + ' has connected')
+                    }
                 }
             })
             socket.on('disconnect', function () {
@@ -599,12 +601,18 @@ pid.write(function (err) {
                 localRedis.get(socketID, function (err, result) {
                     if (err) console.error(err.stack)
                     var host = JSON.parse(result)
-                    var hostname = host.hostname
-                    // Delete the entry with that socket ID as the key
-                    localRedis.del(socketID)
-                    localRedis.del(hostname)
-                    console.log(hostname + ' has disconnected')
-                    if (debug) console.log('Socket (' + socketID + ') closed')
+                    if (host && host.hostname) {
+                        var hostname = host.hostname
+                        // Delete the entry with that socket ID as the key
+                        localRedis.del(socketID)
+                        localRedis.del(hostname)
+                        console.log(hostname + ' has disconnected')
+                        if (debug) console.log('Socket (' + socketID + ') closed')
+                    } else {
+                        localRedis.del(socketID)
+                        console.log('someone has disconnected')
+                        if (debug) console.log('Socket (' + socketID + ') closed')
+                    }
                 })
             })
         })
