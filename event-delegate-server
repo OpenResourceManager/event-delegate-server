@@ -576,6 +576,7 @@ pid.write(function (err) {
          * Messages from clients
          */
         io.on('connection', function (socket) {
+            console.log(socket.id + ' has connected.')
             socket.on('join', function (message) {
                 if (message) {
                     var hostname = message.hostname
